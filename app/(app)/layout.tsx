@@ -1,8 +1,12 @@
 import {ClerkProvider} from "@clerk/nextjs"
+import { SanityLive } from "@/sanity/lib/live"
 
 const Layout = ({children}:{children: React.ReactNode}) => {
   return (
-    <div>{children}</div>
+    <ClerkProvider>
+      <div>{children}</div>
+      <SanityLive/>
+    </ClerkProvider>
   )
 }
 
