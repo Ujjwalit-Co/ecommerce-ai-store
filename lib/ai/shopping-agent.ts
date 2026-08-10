@@ -209,7 +209,7 @@ export function createShoppingAgent({ userId }: ShoppingAgentOptions) {
   return new ToolLoopAgent({
     model: groq(
       (process.env.GROQ_MODEL as never) ??
-        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "qwen/qwen3.6-27b",
     ),
     instructions,
     tools,
