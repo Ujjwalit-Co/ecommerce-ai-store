@@ -18,7 +18,6 @@ export const ORDERS_BY_USER_QUERY = defineQuery(`*[
     "itemImages": items[].product->images[0].asset->url 
     }`);
 
-    
 /**
  * Get single order by ID with full details
  * Used on order detail page

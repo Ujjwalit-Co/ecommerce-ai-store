@@ -1,6 +1,12 @@
+import { Suspense } from "react";
+import { CategoryTiles } from "@/components/app/CategoryTiles";
+import { FeaturedCarouselSkeleton } from "@/components/app/FeaturedCarouselSkeleton";
+import { ProductSection } from "@/components/app/ProductSection";
+import { FeaturedCarousel } from "@/components/FeaturedCarousel";
 import { sanityFetch } from "@/sanity/lib/live";
 import { ALL_CATEGORIES_QUERY } from "@/sanity/queries/categories";
 import {
+  FEATURED_PRODUCTS_QUERY,
   FILTER_PRODUCTS_BY_NAME_QUERY,
   FILTER_PRODUCTS_BY_PRICE_ASC_QUERY,
   FILTER_PRODUCTS_BY_PRICE_DESC_QUERY,
@@ -20,23 +26,21 @@ interface PageProps {
   }>;
 }
 
-export default async function Home({ searchParams }: PageProps) {
+export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams;
 
   const searchQuery = params.q ?? "";
   const categorySlug = params.category ?? "";
   const color = params.color ?? "";
   const material = params.material ?? "";
-  const minPrice = params.minPrice ? Number(params.minPrice) : 0;
-  const maxPrice = params.maxPrice ? Number(params.maxPrice) : 0;
-  const sort = params.sort ?? "";
+  const minPrice = Number(params.minPrice) || 0;
+  const maxPrice = Number(params.maxPrice) || 0;
+  const sort = params.sort ?? "name";
   const inStock = params.inStock === "true";
 
-  console.log("--- Incoming Search Params ---");
-  console.log({ searchQuery, categorySlug, color, material, minPrice, maxPrice, sort, inStock });
-
-  // Determine which query to use
+  // Select query based on sort parameter
   const getQuery = () => {
+    // If searching and sort is relevance, use relevance query
     if (searchQuery && sort === "relevance") {
       return FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
     }
@@ -46,53 +50,73 @@ export default async function Home({ searchParams }: PageProps) {
         return FILTER_PRODUCTS_BY_PRICE_ASC_QUERY;
       case "price_desc":
         return FILTER_PRODUCTS_BY_PRICE_DESC_QUERY;
+      case "relevance":
+        return FILTER_PRODUCTS_BY_RELEVANCE_QUERY;
       default:
         return FILTER_PRODUCTS_BY_NAME_QUERY;
     }
   };
 
-  const selectedQuery = getQuery();
-  console.log("--- Selected Query ---");
-  console.log(selectedQuery);
-
-  // Build params object for the filter query
-  const queryParams = {
-    searchQuery,
-    categorySlug,
-    color,
-    material,
-    minPrice,
-    maxPrice,
-    inStock,
-  };
-
-  console.log("--- Query Params ---");
-  console.log(queryParams);
-
-  // Fetch products with the selected query
+  // Fetch products with filters (server-side via GROQ)
   const { data: products } = await sanityFetch({
-    query: selectedQuery,
-    params: queryParams,
+    query: getQuery(),
+    params: {
+      searchQuery,
+      categorySlug,
+      color,
+      material,
+      minPrice,
+      maxPrice,
+      inStock,
+    },
   });
 
-  console.log("--- Products Result ---");
-  console.log(`Found ${products.length} products`);
-  console.log(products);
-
-  // Fetch categories
+  // Fetch categories for filter sidebar
   const { data: categories } = await sanityFetch({
     query: ALL_CATEGORIES_QUERY,
   });
 
-  console.log("--- Categories Result ---");
-  console.log(`Found ${categories.length} categories`);
-  console.log(categories);
-
-  console.log("--- All Queries Completed ---");
+  // Fetch featured products for carousel
+  const { data: featuredProducts } = await sanityFetch({
+    query: FEATURED_PRODUCTS_QUERY,
+  });
 
   return (
-    <div>
-      <p>Check the server console for query logs.</p>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
+      {/* Featured Products Carousel */}
+      {featuredProducts.length > 0 && (
+        <Suspense fallback={<FeaturedCarouselSkeleton />}>
+          <FeaturedCarousel products={featuredProducts} />
+        </Suspense>
+      )}
+
+      {/* Page Banner */}
+      <div className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <div className="mx-auto max-w-7xl px-4 pt-8 sm:px-6 lg:px-8">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Shop {categorySlug ? categorySlug : "All Products"}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            Premium furniture for your home
+          </p>
+        </div>
+
+        {/* Category Tiles - Full width */}
+        <div className="mt-6">
+          <CategoryTiles
+            categories={categories}
+            activeCategory={categorySlug || undefined}
+          />
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <ProductSection
+          categories={categories}
+          products={products}
+          searchQuery={searchQuery}
+        />
+      </div>
     </div>
   );
 }

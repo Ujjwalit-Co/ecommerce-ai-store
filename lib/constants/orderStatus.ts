@@ -1,9 +1,9 @@
 import {
+  CreditCard,
+  type LucideIcon,
   Package,
   Truck,
   XCircle,
-  CreditCard,
-  type LucideIcon,
 } from "lucide-react";
 
 export type OrderStatusValue = "paid" | "shipped" | "delivered" | "cancelled";
@@ -24,7 +24,7 @@ export interface OrderStatusConfig {
   /** Icon background color for widgets */
   iconBgColor: string;
 
-  discount?:number;
+  discount?: number;
 }
 
 export const ORDER_STATUS_CONFIG: Record<OrderStatusValue, OrderStatusConfig> =
@@ -69,7 +69,7 @@ export const ORDER_STATUS_CONFIG: Record<OrderStatusValue, OrderStatusConfig> =
 
 /** All valid order status values */
 export const ORDER_STATUS_VALUES = Object.keys(
-  ORDER_STATUS_CONFIG
+  ORDER_STATUS_CONFIG,
 ) as OrderStatusValue[];
 
 /** Tabs for admin order filtering (includes "all" option) */
@@ -89,13 +89,13 @@ export const ORDER_STATUS_SANITY_LIST = ORDER_STATUS_VALUES.map((value) => ({
 
 /** Get order status config with fallback to "paid" */
 export const getOrderStatus = (
-  status: string | null | undefined
+  status: string | null | undefined,
 ): OrderStatusConfig =>
   ORDER_STATUS_CONFIG[status as OrderStatusValue] ?? ORDER_STATUS_CONFIG.paid;
 
 /** Get emoji display for status (for AI/chat) */
 export const getOrderStatusEmoji = (
-  status: string | null | undefined
+  status: string | null | undefined,
 ): string => {
   const config = getOrderStatus(status);
   return `${config.emoji} ${config.label}`;

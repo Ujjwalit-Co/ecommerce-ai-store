@@ -13,7 +13,6 @@
     "incremental": true,
     "noEmit": true,
     "plugins": [{ "name": "next" }],
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
     }
